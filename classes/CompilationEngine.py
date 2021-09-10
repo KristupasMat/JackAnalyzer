@@ -317,6 +317,14 @@ class CompilationEngine:
         type_of_token = self.symbol_table.typeOf(vm_class_name)
         index_of_token = self.symbol_table.indexOf(vm_class_name)
 
+        # Handle method calls.
+        if kind_of_token is not None:
+          # Change name to the type of variable which will be the actual class name
+          vm_class_name = type_of_token
+          self.vm_subroutine_args += 1
+          segment = 'this' if kind_of_token == 'field' else kind_of_token
+          self.vm_writer.writePush(segment, index_of_token)
+
         self.__consume_token(self.tokenizer.current_token) # className|varName
         self.__consume_token(".")
         
@@ -325,14 +333,6 @@ class CompilationEngine:
         self.__consume_token("(")
         self.compileExpressionList()
         self.__consume_token(")")
-
-        # Handle method calls.
-        if kind_of_token is not None:
-          # Change name to the type of variable which will be the actual class name
-          vm_class_name = type_of_token
-          self.vm_subroutine_args += 1
-          segment = 'this' if kind_of_token == 'field' else kind_of_token
-          self.vm_writer.writePush(segment, index_of_token)
           
         vm_subroutine_call_name = f'{vm_class_name}.{vm_subroutine_name}'
           
