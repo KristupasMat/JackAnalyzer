@@ -1,1 +1,1 @@
-import JackAnalyzer
+import JackCompiler

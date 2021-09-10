@@ -131,11 +131,11 @@ class JackTokenizer:
 
   def identifier(self) -> str:
     '''Returns the identifier which is the current token.'''
-    return "<identifier> " + self.current_token + " </identifier>"
+    return self.current_token
 
   def intVal(self) -> str:
     '''Returns the integer value which is the current token.'''
-    return "<integerConstant> " + self.current_token + " </integerConstant>"
+    return self.current_token
 
   def stringVal(self) -> str:
     '''Returns the string value which is the current token.'''
