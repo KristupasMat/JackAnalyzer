@@ -139,5 +139,5 @@ class JackTokenizer:
 
   def stringVal(self) -> str:
     '''Returns the string value which is the current token.'''
-    return "<stringConstant> " + self.current_token.strip("\"") + " </stringConstant>"
+    return self.current_token.strip("\"")
 

@@ -190,24 +190,36 @@ class CompilationEngine:
           self.compileReturn()
 
     def compileLet(self) -> None:
-      # NOT YET IMPLEMENTED
       '''Compiles a let statement.'''
       self.__consume_token('let')
+      is_array = False
       var_name = self.tokenizer.current_token
+      segment = 'this' if self.symbol_table.kindOf(var_name) == 'field' else self.symbol_table.kindOf(var_name)
+      index = self.symbol_table.indexOf(var_name)
       self.__consume_token(self.tokenizer.current_token)
       
       if self.tokenizer.current_token == '[':
+        is_array = True
         self.__consume_token('[')
         self.compileExpression()
+        # Handling assignment to an array index
+        self.vm_writer.writePush(segment, index)
         self.__consume_token(']')
+        self.vm_writer.writeArithmetic('add')
+        segment = 'that'
+        index = 0
 
       self.__consume_token('=')
       self.compileExpression()
       self.__consume_token(';')
+
+      if is_array:
+        self.vm_writer.writePop('temp', 0)
+        self.vm_writer.writePop('pointer', 1)
+        self.vm_writer.writePush('temp', 0)
+
       # pop to expression value to the selected variable
-      # TEMP for field
-      segment = 'this' if self.symbol_table.kindOf(var_name) == 'field' else self.symbol_table.kindOf(var_name)
-      self.vm_writer.writePop(segment, self.symbol_table.indexOf(var_name))
+      self.vm_writer.writePop(segment, index)
 
     def compileIf(self) -> None:
       '''Compiles an if statement, possibly with a trailing else clause.'''
@@ -239,7 +251,6 @@ class CompilationEngine:
         self.vm_writer.writeLabel(label_if_false)
 
     def compileWhile(self) -> None:
-      # NOT YET IMPLEMENTED
       '''Compiles a while statement.'''
       label_while_exp = f'WHILE_EXP{self.control_statement_labels["WHILE_EXP"]}'
       label_while_end = f'WHILE_END{self.control_statement_labels["WHILE_END"]}'
@@ -351,6 +362,13 @@ class CompilationEngine:
         
         if self.tokenizer.tokenType() == 'INT_CONST':
           self.vm_writer.writePush('constant', self.tokenizer.current_token) # push constant i 
+        elif self.tokenizer.tokenType() == 'STRING_CONST':
+          # How many characters in the string?
+          self.vm_writer.writePush('constant', len(self.tokenizer.stringVal()))
+          self.vm_writer.writeCall('String.new', 1)
+          for char in self.tokenizer.stringVal():
+            self.vm_writer.writePush('constant', ord(char))
+            self.vm_writer.writeCall('String.appendChar', 2)
         elif self.tokenizer.current_token in ['false', 'null']:
           self.vm_writer.writePush('constant', 0)
         elif self.tokenizer.current_token == 'true':
@@ -371,11 +389,20 @@ class CompilationEngine:
         self.compileExpression()
         self.__consume_token(")")
       elif self.tokenizer.next_token == "[":
-        # array
+        # array expression
+        var_name = self.tokenizer.current_token
+        segment = 'this' if self.symbol_table.kindOf(var_name) == 'field' else self.symbol_table.kindOf(var_name)
+        index = self.symbol_table.indexOf(var_name)
+
         self.__consume_token(self.tokenizer.current_token)
         self.__consume_token("[")
         self.compileExpression()
         self.__consume_token("]")
+        self.vm_writer.writePush(segment, index)
+        self.vm_writer.writeArithmetic('add')
+        self.vm_writer.writePop('pointer', 1)
+        self.vm_writer.writePush('that', 0)
+
       elif self.tokenizer.next_token in ["(", "."]:
         self.compileSubroutineCall()
       else:
