@@ -34,9 +34,8 @@ else:
     sys.exit()
 
 def main():
-
-    for jack_file in jack_files:
-      CompilationEngine(jack_file['input_file_path'], jack_file['output_file_path'])
+  for jack_file in jack_files:
+    CompilationEngine(jack_file['input_file_path'], jack_file['output_file_path'])
 
 
 main()
